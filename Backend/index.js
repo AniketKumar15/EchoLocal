@@ -29,6 +29,7 @@ const server = http.createServer(app);
 
 app.use(cors());
 app.use(express.json());
+app.set("trust proxy", true); // for req.ip behind proxies
 
 // ================= DB =================
 connectToMongo();

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import AuthContext from "./AuthContext";
 import toast from "react-hot-toast";
+import { getDeviceId } from "../../utils/deviceId";
 
 const AuthState = (props) => {
     const [user, setUser] = useState(null);
@@ -12,7 +13,7 @@ const AuthState = (props) => {
         try {
             const res = await fetch(`${hostUrl}api/auth/random-name`, {
                 method: "GET",
-                headers: { "Content-Type": "application/json" },
+                headers: { "Content-Type": "application/json", "x-device-id": getDeviceId() },
             });
 
             const data = await res.json();
