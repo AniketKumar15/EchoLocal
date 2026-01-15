@@ -1,0 +1,245 @@
+import express from 'express';
+import dotenv from "dotenv";
+import cors from "cors";
+import connectToMongo from './db.js';
+import authRoutes from "./Routes/authRoutes.js";
+import chatRoomRoutes from "./Routes/chatRoomRoutes.js";
+import messageRoutes from "./Routes/MessageRoutes.js";
+
+// Configuring dotenv to load environment variables
+dotenv.config({
+    path: "./env"
+});
+
+
+const app = express();
+const port = process.env.PORT || 3000;
+
+
+app.use(cors());
+app.use(express.json()); // Middleware to parse JSON bodies
+
+connectToMongo();
+
+app.get("/", (req, res) => {
+    res.send({
+        activeStatus: true,
+        error: false
+    })
+})
+
+app.use("/api/auth", authRoutes);
+app.use("/api/chatrooms", chatRoomRoutes);
+app.use("/api/messages", messageRoutes);
+
+app.listen(port, () => {
+    console.log(`Server is running on port ${port}`);
+    console.log(`http://localhost:${port}`); // Log the server URL
+});
+
+
+import mongoose from "mongoose";
+
+const ChatRoomSchema = new mongoose.Schema({
+    roomName: { type: String, required: true },
+
+    hostUser: { type: mongoose.Schema.Types.ObjectId, ref: "TemporaryUser", required: true },
+    hostUsername: { type: String, required: true },
+
+    category: {
+        type: String,
+        required: true,
+        enum: ["Gaming", "General", "Study", "Meetup", "Nearby", "Riddle", "Music", "Other"],
+    },
+
+    duration: { type: Number, default: 2, enum: [2, 3, 4, 6] },
+
+    expiryTime: { type: Date },
+
+    location: {
+        type: { type: String, enum: ["Point"], default: "Point" },
+        coordinates: { type: [Number], required: true }, // [lng, lat]
+    },
+
+    createdAt: { type: Date, default: Date.now },
+});
+
+ChatRoomSchema.pre("save", function (next) {
+    if (!this.expiryTime) {
+        const expireDate = new Date(this.createdAt);
+        expireDate.setHours(expireDate.getHours() + this.duration);
+        this.expiryTime = expireDate;
+    }
+    if (typeof next === "function") next();
+});
+
+
+ChatRoomSchema.index({ location: "2dsphere" });
+
+export default mongoose.model("ChatRoom", ChatRoomSchema);
+
+
+import mongoose from "mongoose";
+
+const MessageSchema = new mongoose.Schema({
+    roomId: { type: mongoose.Schema.Types.ObjectId, ref: "ChatRoom", required: true },
+    senderId: { type: mongoose.Schema.Types.ObjectId, ref: "TemporaryUser", required: true },
+    text: { type: String, required: true },
+}, { timestamps: true });
+
+export default mongoose.model("Message", MessageSchema);
+
+
+
+import Message from "../Models/MessageSchema.model.js";
+
+// Send a new message
+export const sendMessage = async (req, res) => {
+    try {
+        const { roomId, text } = req.body;
+        const senderId = req.user._id; // force logged-in user as sender
+
+        const message = new Message({ roomId, senderId, text });
+        await message.save();
+
+        res.status(201).json({ success: true, message });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+};
+
+
+// Get all messages from a chatroom
+export const getRoomMessages = async (req, res) => {
+    try {
+        const { roomId } = req.params;
+
+        const messages = await Message.find({ roomId })
+            .populate("senderId", "username") // optional: returns sender username
+            .sort({ createdAt: 1 });
+
+        res.status(200).json({ success: true, messages });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+};
+
+
+
+
+
+
+
+
+import TemporaryUser from "../Models/TemporaryUserSchema.model.js";
+import { generateUsername } from "../Utils/generateName.js";
+import crypto from "crypto";
+import jwt from "jsonwebtoken";
+
+const SECRET = process.env.JWT_SECRET || "echoLocalSecretKey";
+
+export const getRandomUsername = async (req, res) => {
+    try {
+        const ip = req.ip || "unknown";
+        const ipHash = crypto.createHash("sha256").update(ip).digest("hex");
+
+        const existingIPUser = await TemporaryUser.findOne({ ipHash });
+        if (existingIPUser) {
+            const token = jwt.sign({ _id: existingIPUser._id, username: existingIPUser.username }, SECRET);
+            return res.json({ _id: existingIPUser._id, username: existingIPUser.username, token });
+        }
+
+        let username;
+        let exists = true;
+
+        while (exists) {
+            username = generateUsername();
+            const user = await TemporaryUser.findOne({ username });
+            if (!user) exists = false;
+        }
+
+        const newUser = new TemporaryUser({
+            username,
+            ipHash,
+            deviceHash: req.headers["user-agent"],
+        });
+
+        await newUser.save(); // save first!
+
+        const token = jwt.sign({ _id: newUser._id, username }, SECRET);
+        res.json({ _id: newUser._id, username, token });
+
+    } catch (error) {
+        res.status(500).json({ message: "Error generating username", error });
+    }
+};
+
+export const refreshUsername = async (req, res) => {
+    try {
+        const token = req.headers.authorization?.split(" ")[1];
+        if (!token) return res.status(401).json({ message: "No token provided" });
+
+        const decoded = jwt.verify(token, SECRET);
+        const oldUsername = decoded.username;
+
+        await TemporaryUser.deleteOne({ username: oldUsername });
+
+        let username;
+        let exists = true;
+
+        while (exists) {
+            username = generateUsername();
+            const user = await TemporaryUser.findOne({ username });
+            if (!user) exists = false;
+        }
+
+        const ip = req.ip || "unknown";
+        const ipHash = crypto.createHash("sha256").update(ip).digest("hex");
+
+        const newUser = new TemporaryUser({
+            username,
+            ipHash,
+            deviceHash: req.headers["user-agent"],
+        });
+
+        await newUser.save();
+
+        const newToken = jwt.sign({ _id: newUser._id, username }, SECRET);
+        res.json({ _id: newUser._id, username, token: newToken });
+
+    } catch (error) {
+        res.status(500).json({ message: "Error refreshing username", error });
+    }
+};
+
+export const getCurrentUser = async (req, res) => {
+    try {
+        const token = req.headers.authorization?.split(" ")[1];
+        if (!token) return res.status(401).json({ message: "No token provided" });
+
+        const decoded = jwt.verify(token, SECRET);
+        const username = decoded.username;
+
+        const user = await TemporaryUser.findOne({ username });
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        res.json({ active: true, _id: user._id, username, token });
+
+    } catch (err) {
+        res.status(401).json({ message: "Invalid token" });
+    }
+};
+
+export const logoutUser = async (req, res) => {
+    try {
+        const token = req.headers.authorization?.split(" ")[1];
+        if (!token) return res.status(401).json({ message: "No token provided" });
+        const decoded = jwt.verify(token, SECRET);
+        const username = decoded.username;
+        await TemporaryUser.deleteOne({ username });
+        res.json({ message: "User logged out successfully" });
+    }
+    catch (err) {
+        res.status(500).json({ message: "Error logging out user", error: err });
+    }
+};
