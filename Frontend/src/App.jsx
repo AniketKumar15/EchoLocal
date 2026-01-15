@@ -1,7 +1,7 @@
 import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import AuthPage from "./pages/AuthPage";
-import Home from "./Pages/Home";
+import Home from "./pages/Home";
 import PrivateRoute from "./Components/PrivateRoute";
 import { Toaster } from "react-hot-toast";
 import AuthState from "./Contexts/AuthContexts/AuthState";
