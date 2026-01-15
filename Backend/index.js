@@ -15,7 +15,7 @@ import chatRoomRoutes from "./Routes/chatRoomRoutes.js";
 import messageRoutes from "./Routes/MessageRoutes.js";
 
 // ================= ENV =================
-dotenv.config({ path: "./env" });
+dotenv.config();
 
 if (!process.env.JWT_SECRET) {
     throw new Error("JWT_SECRET is missing");
@@ -62,7 +62,7 @@ io.use((socket, next) => {
 
 // ---------- SOCKET EVENTS ----------
 io.on("connection", (socket) => {
-    console.log("Connected:", socket.id, socket.user.username);
+    // console.log("Connected:", socket.id, socket.user.username);
 
     // JOIN ROOM (click = join)
     socket.on("joinRoom", async (roomId) => {
@@ -138,7 +138,7 @@ io.on("connection", (socket) => {
             cleanupRoom(roomId, socket.id);
         }
         emitOnlineRooms();
-        console.log("Disconnected:", socket.id);
+        // console.log("Disconnected:", socket.id);
     });
 });
 
@@ -185,6 +185,9 @@ setInterval(async () => {
 
         delete roomSocketsMap[roomId];
     }
+
+    await ChatRoom.deleteMany({ expiryTime: { $lt: now } });
+    await Message.deleteMany({ expiresAt: { $lt: now } });
 }, 60 * 1000);
 
 // ================= ROUTES =================
@@ -201,17 +204,17 @@ app.use("/api/chatrooms", chatRoomRoutes);
 app.use("/api/messages", messageRoutes);
 
 // ================= START SERVER =================
-// const PORT = process.env.PORT || 3000;
-// server.listen(PORT, () => {
-//     console.log(`🚀 Server running at http://localhost:${PORT}`);
-// });
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+    console.log(`🚀 Server running at http://localhost:${PORT}`);
+});
 
-// ================= DEV ENV SETUP =================
-if (process.env.NODE_ENV !== "production") {
-    const PORT = process.env.PORT || 3000;
-    server.listen(PORT, () => {
-        console.log(`🚀 Server running at http://localhost:${PORT}`);
-    });
-}
+// // ================= DEV ENV SETUP =================
+// if (process.env.NODE_ENV !== "production") {
+//     const PORT = process.env.PORT || 3000;
+//     server.listen(PORT, () => {
+//         console.log(`🚀 Server running at http://localhost:${PORT}`);
+//     });
+// }
 
-export default server;
+// export default server;
