@@ -4,7 +4,7 @@ import toast from "react-hot-toast";
 import MessageContext from "./MessageContext";
 
 const MessageState = ({ children }) => {
-    const hostUrl = "https://echo-local-backend.vercel.app/";
+    const hostUrl = "https://echo-local-backend.vercel.app";
 
     const socketRef = useRef(null);
 
