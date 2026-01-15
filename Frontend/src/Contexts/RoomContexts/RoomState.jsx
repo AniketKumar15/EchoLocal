@@ -3,7 +3,7 @@ import RoomContext from "./RoomContext"
 import toast from "react-hot-toast";
 
 const RoomState = (props) => {
-    const hostUrl = "http://localhost:3000/";
+    const hostUrl = "https://echo-local-backend.vercel.app/";
 
     const [rooms, setRooms] = useState([]);
     const [currentRoom, setCurrentRoom] = useState(null);

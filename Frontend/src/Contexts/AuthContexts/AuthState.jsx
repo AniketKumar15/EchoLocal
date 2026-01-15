@@ -5,7 +5,7 @@ import toast from "react-hot-toast";
 const AuthState = (props) => {
     const [user, setUser] = useState(null);
 
-    const hostUrl = "http://localhost:3000/";
+    const hostUrl = "https://echo-local-backend.vercel.app/";
 
     // 1. Generate Random Username
     const userNameGenerate = async () => {
