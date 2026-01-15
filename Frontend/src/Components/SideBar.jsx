@@ -15,6 +15,7 @@ const SideBar = ({ user, refreshUsername, logoutUser, selectedRoom, setSelectedR
 
     const [openCreateRoom, setOpenCreateRoom] = useState(false);
     const [coords, setCoords] = useState(null);
+    const [open, setOpen] = useState(false);
 
     // Get user location
     useEffect(() => {
@@ -44,7 +45,7 @@ const SideBar = ({ user, refreshUsername, logoutUser, selectedRoom, setSelectedR
     }
 
     return (
-        <div className="bg-white/10 h-[calc(100vh-1rem)] p-5 flex flex-col rounded-xl text-white mr-2 backdrop-blur-xs">
+        <div className="md:bg-white/10 h-[calc(100vh-1rem)] p-5 flex flex-col rounded-xl text-white mr-0 md:mr-2 backdrop-blur-xs">
             {/* HEADER */}
             <div className="pb-5">
                 <div className="flex justify-between items-center">
@@ -53,17 +54,46 @@ const SideBar = ({ user, refreshUsername, logoutUser, selectedRoom, setSelectedR
                         <h1 className="text-lg font-semibold">EchoLocal</h1>
                     </div>
 
-                    <div className="relative py-2 group">
-                        <CiMenuKebab className="size-5 cursor-pointer" />
-                        <div className="absolute top-full right-0 z-20 w-32 p-4 rounded-md bg-[#282142] border border-gray-600 hidden group-hover:block">
-                            <p className="cursor-pointer text-sm" onClick={() => setOpenCreateRoom(true)}>Create Room</p>
-                            <hr className="my-2 border-gray-500" />
-                            <p className="cursor-pointer text-sm" onClick={refreshUsername}>Refresh Username</p>
-                            <hr className="my-2 border-gray-500" />
-                            <p className="cursor-pointer text-sm" onClick={() => {
-                                logoutNav();
-                            }}>Logout</p>
-                        </div>
+
+                    <div className="relative py-2">
+                        <CiMenuKebab
+                            className="size-5 cursor-pointer"
+                            onClick={() => setOpen(!open)}
+                        />
+
+                        {open && (
+                            <div className="absolute top-full right-0 z-20 w-32 p-4 rounded-md bg-[#282142] border border-gray-600">
+                                <p
+                                    className="cursor-pointer text-sm"
+                                    onClick={() => {
+                                        setOpen(false);
+                                        setOpenCreateRoom(true);
+                                    }}
+                                >
+                                    Create Room
+                                </p>
+                                <hr className="my-2 border-gray-500" />
+                                <p
+                                    className="cursor-pointer text-sm"
+                                    onClick={() => {
+                                        setOpen(false);
+                                        refreshUsername();
+                                    }}
+                                >
+                                    Refresh Username
+                                </p>
+                                <hr className="my-2 border-gray-500" />
+                                <p
+                                    className="cursor-pointer text-sm"
+                                    onClick={() => {
+                                        setOpen(false);
+                                        logoutNav();
+                                    }}
+                                >
+                                    Logout
+                                </p>
+                            </div>
+                        )}
                     </div>
                 </div>
 

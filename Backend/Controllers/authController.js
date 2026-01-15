@@ -43,9 +43,8 @@ export const getRandomUsername = async (req, res) => {
 
         user = await TemporaryUser.create({
             username,
-            deviceHash,
             ipHash,
-            createdAt: new Date()
+            deviceHash,
         });
 
         const token = jwt.sign(

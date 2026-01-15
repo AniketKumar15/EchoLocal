@@ -6,7 +6,7 @@ import AuthContext from "../Contexts/AuthContexts/AuthContext";
 import InputEmoji from 'react-input-emoji'
 
 const ChatContainer = ({ selectedRoom, setSelectedRoom }) => {
-    const { messages, sendMessage, usersCount } = useContext(MessageContext);
+    const { messages, sendMessage, usersCount, leaveRoom } = useContext(MessageContext);
     const { user } = useContext(AuthContext);
 
     const [text, setText] = useState("");
@@ -70,7 +70,7 @@ const ChatContainer = ({ selectedRoom, setSelectedRoom }) => {
     };
 
     return (
-        <div className="bg-white/10 h-[calc(100vh-1rem)] relative p-5 rounded-xl text-white backdrop-blur-xs">
+        <div className="md:bg-white/10 h-[calc(100vh-1rem)] relative p-5 rounded-xl text-white backdrop-blur-xs">
             {/* HEADER */}
             <div className="flex items-center py-3 mx-4 border-b border-stone-500">
                 <div className="flex items-center gap-2 basis-1/3">
@@ -95,7 +95,10 @@ const ChatContainer = ({ selectedRoom, setSelectedRoom }) => {
                     </p>
                     <FaArrowLeft
                         className="size-4 cursor-pointer md:hidden"
-                        onClick={() => setSelectedRoom(null)}
+                        onClick={() => {
+                            leaveRoom();
+                            setSelectedRoom(null);
+                        }}
                     />
                 </div>
             </div>
