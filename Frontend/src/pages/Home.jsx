@@ -9,7 +9,7 @@ const Home = () => {
     const [selectedRoom, setSelectedRoom] = useState(null);
 
     return (
-        <div className="h-screen w-full text-white p-2">
+        <div className="h-dvh w-full text-white p-0 md:p-2 ">
             <BackGround />
             {/* Grid Layout */}
             <div className="h-full overflow-hidden grid grid-cols-1 relative md:grid-cols-[0.5fr_1.5fr]">

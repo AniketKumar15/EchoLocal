@@ -69,10 +69,24 @@ const ChatContainer = ({ selectedRoom, setSelectedRoom }) => {
         setText("");
     };
 
+    const getUserColor = (username) => {
+        if (!username) return "hsl(220, 70%, 60%)";
+
+        let hash = 0;
+        for (let i = 0; i < username.length; i++) {
+            hash = username.charCodeAt(i) + ((hash << 5) - hash);
+        }
+
+        const hue = Math.abs(hash) % 360;
+        return `hsl(${hue}, 70%, 55%)`;
+    };
+
+
     return (
-        <div className="md:bg-white/10 h-[calc(100vh-1rem)] relative p-5 rounded-xl text-white backdrop-blur-xs">
+        <div className="md:bg-white/10 h-[calc(100dvh-1rem)] relative p-0 md:p-5 rounded-xl text-white backdrop-blur-xs overflow-hidden">
+
             {/* HEADER */}
-            <div className="flex items-center py-3 mx-4 border-b border-stone-500">
+            <div className="flex items-center py-3 mx-2 md:mx-4 border-b border-stone-500">
                 <div className="flex items-center gap-2 basis-1/3">
                     <img src="./ChatRoom1.png" className="w-10 rounded-full" />
                     <h3 className="font-medium truncate">{selectedRoom.roomName}</h3>
@@ -94,7 +108,7 @@ const ChatContainer = ({ selectedRoom, setSelectedRoom }) => {
                         ⏳ {timeLeft}
                     </p>
                     <FaArrowLeft
-                        className="size-4 cursor-pointer md:hidden"
+                        className="size-4 cursor-pointer"
                         onClick={() => {
                             leaveRoom();
                             setSelectedRoom(null);
@@ -116,7 +130,10 @@ const ChatContainer = ({ selectedRoom, setSelectedRoom }) => {
                             {/* AVATAR (only others) */}
                             {!isMe && (
                                 <div className="shrink-0 mt-1">
-                                    <div className="w-8 h-8 rounded-full bg-indigo-500/80 flex items-center justify-center">
+                                    <div
+                                        className="w-8 h-8 rounded-full flex items-center justify-center shadow-md ring-1 ring-white/20"
+                                        style={{ backgroundColor: getUserColor(msg.senderUsername) }}
+                                    >
                                         <FaUserAstronaut className="text-sm" />
                                     </div>
                                 </div>
@@ -124,15 +141,19 @@ const ChatContainer = ({ selectedRoom, setSelectedRoom }) => {
 
                             {/* MESSAGE BUBBLE */}
                             <div
-                                className={`max-w-[70%] px-4 py-2 rounded-2xl text-sm leading-relaxed
-                    ${isMe
-                                        ? "bg-[#6d5dfc] rounded-br-md"
-                                        : "bg-gray-700/60 rounded-bl-md"
+                                className={`max-w-[70%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed transition-transform duration-150
+                                    ${isMe
+                                        ? "bg-[#6d5dfc] rounded-br-md shadow-black/20 shadow-sm"
+                                        : "bg-gray-700/60 rounded-bl-md shadow-black/20 shadow-sm"
                                     }`}
+
                             >
                                 {/* USERNAME (only others) */}
                                 {!isMe && (
-                                    <p className="text-xs text-indigo-300 mb-1 font-medium">
+                                    <p
+                                        className="text-xs mb-1 font-medium"
+                                        style={{ color: getUserColor(msg.senderUsername) }}
+                                    >
                                         {msg.senderUsername}
                                     </p>
                                 )}
@@ -152,7 +173,7 @@ const ChatContainer = ({ selectedRoom, setSelectedRoom }) => {
                             </div>
 
                             {/* SPACER FOR ALIGNMENT (me) */}
-                            {isMe && <div className="w-8" />}
+                            {isMe && <div className="md:w-8" />}
                         </div>
                     );
                 })}
@@ -162,21 +183,49 @@ const ChatContainer = ({ selectedRoom, setSelectedRoom }) => {
 
             {/* INPUT */}
             <div className="absolute bottom-0 left-0 right-0 flex items-center gap-3 p-3">
-                <div className="flex-1 flex items-center bg-gray-100/12 rounded-full px-3">
+                <div className="flex-1 hidden items-center md:flex gap-2 px-4 rounded-2xl
+                bg-gray-100/12 backdrop-blur-md border border-white/10
+                focus-within:border-indigo-400/40 transition">
                     <InputEmoji
                         type="text"
                         value={text}
                         onChange={setText}
                         onKeyDown={(e) => e.key === "Enter" && handleSend()}
-                        placeholder="Send a message"
+                        placeholder="Message"
                         background="none"
                         color="white"
                         borderColor="transparent"
                         shouldReturn
 
                     />
-                    <IoMdSend onClick={handleSend} className="w-6 cursor-pointer" />
+                    <button
+                        className="p-2 rounded-full bg-indigo-500/90 active:scale-95
+                   transition-transform" onClick={handleSend}
+                    >
+                        <IoMdSend className="w-4 h-4 text-white" />
+                    </button>
                 </div>
+                <div className="flex-1 flex items-center md:hidden gap-2 px-4 py-2 rounded-2xl
+                bg-white/10 backdrop-blur-md border border-white/10
+                focus-within:border-indigo-400/40 transition">
+
+                    <input
+                        type="text"
+                        placeholder="Message"
+                        className="flex-1 bg-transparent text-sm text-white placeholder-gray-400
+                   outline-none py-2"
+                        value={text}
+                        onChange={(e) => setText(e.target.value)}
+                    />
+
+                    <button
+                        className="p-2 rounded-full bg-indigo-500/90 active:scale-95
+                   transition-transform" onClick={handleSend}
+                    >
+                        <IoMdSend className="w-4 h-4 text-white" />
+                    </button>
+                </div>
+
             </div>
         </div>
     );

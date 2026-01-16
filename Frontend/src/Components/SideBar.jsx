@@ -16,6 +16,7 @@ const SideBar = ({ user, refreshUsername, logoutUser, selectedRoom, setSelectedR
     const [openCreateRoom, setOpenCreateRoom] = useState(false);
     const [coords, setCoords] = useState(null);
     const [open, setOpen] = useState(false);
+    const [searchText, setSearchText] = useState("");
 
     // Get user location
     useEffect(() => {
@@ -45,7 +46,7 @@ const SideBar = ({ user, refreshUsername, logoutUser, selectedRoom, setSelectedR
     }
 
     return (
-        <div className="md:bg-white/10 h-[calc(100vh-1rem)] p-5 flex flex-col rounded-xl text-white mr-0 md:mr-2 backdrop-blur-xs">
+        <div className="md:bg-white/10 h-[calc(100dvh-1rem)] p-5 flex flex-col rounded-xl text-white mr-0 md:mr-2 backdrop-blur-xs overflow-hidden">
             {/* HEADER */}
             <div className="pb-5">
                 <div className="flex justify-between items-center">
@@ -98,10 +99,14 @@ const SideBar = ({ user, refreshUsername, logoutUser, selectedRoom, setSelectedR
                 </div>
 
                 {/* SEARCH */}
-                <div className="bg-[#282142] rounded-full flex items-center gap-2 py-3 px-4 mt-5">
+                <div className="flex-1 flex items-center gap-2 px-4 py-3 rounded-2xl
+                bg-white/10 backdrop-blur-md border border-white/10
+                focus-within:border-indigo-400/40 transition mt-5">
                     <FaSearch className="size-3" />
                     <input
                         type="text"
+                        value={searchText}
+                        onChange={(e) => setSearchText(e.target.value)}
                         className="bg-transparent outline-none text-xs flex-1"
                         placeholder="Search Room"
                     />
@@ -114,66 +119,68 @@ const SideBar = ({ user, refreshUsername, logoutUser, selectedRoom, setSelectedR
                     <p className="text-center text-gray-400 mt-10">No rooms available nearby. You can create one.</p>
                 ) : (
                     <div className="flex flex-col gap-2 p-2">
-                        {rooms.map((room) => {
-                            const isSelected = selectedRoom?._id === room._id;
-                            const isHost = room.hostUsername === user?.username;
+                        {rooms
+                            .filter(room => room.roomName.toLowerCase().includes(searchText.toLowerCase()))
+                            .map((room) => {
+                                const isSelected = selectedRoom?._id === room._id;
+                                const isHost = room.hostUsername === user?.username;
 
-                            return (
-                                <div
-                                    key={room._id}
-                                    onClick={() => {
-                                        // prevent re-joining same room
-                                        if (currentRoomId === room._id) return;
+                                return (
+                                    <div
+                                        key={room._id}
+                                        onClick={() => {
+                                            // prevent re-joining same room
+                                            if (currentRoomId === room._id) return;
 
-                                        // leave previous room (disconnect socket)
-                                        leaveRoom();
+                                            // leave previous room (disconnect socket)
+                                            leaveRoom();
 
-                                        // set UI state
-                                        setSelectedRoom(room);
+                                            // set UI state
+                                            setSelectedRoom(room);
 
-                                        // join new room
-                                        joinRoom(room._id);
-                                    }}
-                                    className={`rounded-lg p-3 transition-colors cursor-pointer
+                                            // join new room
+                                            joinRoom(room._id);
+                                        }}
+                                        className={`rounded-lg p-3 transition-colors cursor-pointer
                                 ${isSelected ? "bg-indigo-600" : "bg-[#282142] hover:bg-[#3a305a]"}`}
-                                >
-                                    <div className="flex justify-between items-center">
-                                        <div className="flex items-center gap-2">
-                                            <img src="./ChatRoom1.png" className="w-10 rounded-full" />
-                                            <h3 className="font-medium">{room.roomName}</h3>
+                                    >
+                                        <div className="flex justify-between items-center">
+                                            <div className="flex items-center gap-2">
+                                                <img src="./ChatRoom1.png" className="w-10 rounded-full" />
+                                                <h3 className="font-medium">{room.roomName}</h3>
+                                            </div>
+
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-xs bg-gray-700 px-2 py-1 rounded-full">
+                                                    {room.category}
+                                                </span>
+
+                                                {/* DELETE — HOST ONLY */}
+                                                {isHost && (
+                                                    <FaTrash
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+
+                                                            if (selectedRoom?._id === room._id) {
+                                                                leaveRoom();
+                                                                setSelectedRoom(null);
+                                                            }
+
+                                                            deleteRoom(room._id);
+                                                        }}
+
+                                                        className="text-red-400 hover:text-red-500 cursor-pointer"
+                                                    />
+                                                )}
+                                            </div>
                                         </div>
 
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-xs bg-gray-700 px-2 py-1 rounded-full">
-                                                {room.category}
-                                            </span>
-
-                                            {/* DELETE — HOST ONLY */}
-                                            {isHost && (
-                                                <FaTrash
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-
-                                                        if (selectedRoom?._id === room._id) {
-                                                            leaveRoom();
-                                                            setSelectedRoom(null);
-                                                        }
-
-                                                        deleteRoom(room._id);
-                                                    }}
-
-                                                    className="text-red-400 hover:text-red-500 cursor-pointer"
-                                                />
-                                            )}
-                                        </div>
+                                        <p className="text-xs text-gray-300 mt-1">
+                                            Duration: {room.duration} hours
+                                        </p>
                                     </div>
-
-                                    <p className="text-xs text-gray-300 mt-1">
-                                        Duration: {room.duration} hours
-                                    </p>
-                                </div>
-                            );
-                        })}
+                                );
+                            })}
                     </div>
                 )}
             </div>

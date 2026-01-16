@@ -46,6 +46,7 @@ const AuthState = (props) => {
                 headers: {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${token}`,
+                    "x-device-id": getDeviceId()
                 },
             });
 
@@ -104,6 +105,7 @@ const AuthState = (props) => {
                 headers: {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${token}`,
+                    "x-device-id": getDeviceId()
                 },
             });
 
@@ -113,6 +115,7 @@ const AuthState = (props) => {
                 toast.success("Logged out successfully", { duration: 4000 });
             } else {
                 toast.error("Logout failed", { duration: 4000 });
+                console.log(res);
             }
         } catch (err) {
             toast.error("Logout failed", { duration: 4000 });
